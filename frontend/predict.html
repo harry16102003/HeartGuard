@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>HeartGuard - Prediction</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-900 text-white flex">
+
+<!-- SIDEBAR -->
+<div class="w-64 h-screen bg-gray-800 p-6">
+  <h2 class="text-2xl mb-6">❤️ HeartGuard</h2>
+
+  <ul class="space-y-4">
+    <li><a href="dashboard.html">📊 Dashboard</a></li>
+    <li><a href="predict.html" class="text-purple-400">❤️ Predict</a></li>
+    <li><a href="chatbot.html">🤖 AI Assistant</a></li>
+  </ul>
+</div>
+
+<!-- MAIN -->
+<div class="flex-1 p-8 overflow-auto">
+
+  <h1 class="text-3xl mb-6">❤️ Heart Risk Prediction</h1>
+
+  <!-- FORM -->
+  <div class="bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-lg">
+
+    <div class="grid grid-cols-2 gap-4">
+
+      <input id="age" placeholder="Age" class="input">
+      <input id="bmi" placeholder="BMI" class="input">
+
+      <input id="cholesterol" placeholder="Cholesterol" class="input">
+      <input id="systolic_bp" placeholder="Systolic BP" class="input">
+
+      <input id="diastolic_bp" placeholder="Diastolic BP" class="input">
+      <input id="glucose" placeholder="Glucose" class="input">
+
+      <input id="physical_activity" placeholder="Physical Activity" class="input">
+
+      <select id="sex" class="input">
+        <option value="1">Male</option>
+        <option value="0">Female</option>
+      </select>
+
+      <select id="smoking" class="input">
+        <option value="1">Smoker</option>
+        <option value="0">Non-Smoker</option>
+      </select>
+
+      <select id="hypertension" class="input">
+        <option value="1">Hypertension</option>
+        <option value="0">Normal</option>
+      </select>
+
+      <select id="diabetes" class="input">
+        <option value="1">Diabetic</option>
+        <option value="0">Non-Diabetic</option>
+      </select>
+
+    </div>
+
+    <!-- ADVANCED -->
+    <h2 class="mt-6 text-gray-300">Advanced (Optional)</h2>
+
+    <div class="grid grid-cols-3 gap-4 mt-2">
+      <input id="heart_rate" placeholder="Heart Rate" class="input">
+      <input id="ejection_fraction" placeholder="Ejection Fraction" class="input">
+      <input id="serum_creatinine" placeholder="Serum Creatinine" class="input">
+    </div>
+
+    <button onclick="predict()" 
+      class="mt-6 w-full bg-purple-600 p-3 rounded-xl hover:bg-purple-700 transition">
+      Predict Risk
+    </button>
+
+  </div>
+
+  <!-- LOADER -->
+  <div id="loader" class="hidden text-center mt-6">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-purple-500 mx-auto"></div>
+    <p class="mt-2 text-gray-400">Analyzing health data...</p>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result" class="hidden mt-6 bg-white/10 backdrop-blur-lg p-6 rounded-2xl text-center">
+
+    <h2 id="risk" class="text-4xl font-bold"></h2>
+
+    <div class="w-full bg-gray-700 rounded-full h-4 mt-4">
+      <div id="progressBar" class="h-4 rounded-full transition-all duration-500"></div>
+    </div>
+
+    <p id="recommendation" class="mt-4 text-gray-300"></p>
+
+  </div>
+
+</div>
+
+<style>
+.input {
+  padding: 10px;
+  border-radius: 10px;
+  background: #1f2937;
+  border: none;
+  color: white;
+}
+</style>
+
+<script>
+
+// 🔥 Risk Label
+function getRiskLabel(value){
+  if(value < 30) return "Low Risk";
+  if(value < 60) return "Medium Risk";
+  return "High Risk";
+}
+
+// 🔥 Recommendation
+function getRecommendation(value){
+  if(value < 30) return "Great! Maintain a healthy lifestyle.";
+  if(value < 60) return "Moderate risk. Improve diet and exercise.";
+  return "High risk! Consult a doctor immediately.";
+}
+
+async function predict() {
+
+  document.getElementById("result").classList.add("hidden");
+  document.getElementById("loader").classList.remove("hidden");
+
+  const data = {
+    age: Number(age.value),
+    sex: Number(sex.value),
+    bmi: Number(bmi.value),
+    cholesterol: Number(cholesterol.value),
+    systolic_bp: Number(systolic_bp.value),
+    diastolic_bp: Number(diastolic_bp.value),
+    glucose: Number(glucose.value),
+    smoking: Number(smoking.value),
+    hypertension: Number(hypertension.value),
+    physical_activity: Number(physical_activity.value),
+    diabetes: Number(diabetes.value),
+
+    heart_rate: Number(heart_rate.value) || 75,
+    ejection_fraction: Number(ejection_fraction.value) || 40,
+    serum_creatinine: Number(serum_creatinine.value) || 1
+  };
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    document.getElementById("loader").classList.add("hidden");
+    document.getElementById("result").classList.remove("hidden");
+
+    let risk = result.final_risk_percentage;
+
+    let label = getRiskLabel(risk);
+    let advice = getRecommendation(risk);
+
+    document.getElementById("risk").innerText =
+      risk + "% - " + label;
+
+    document.getElementById("recommendation").innerText =
+      advice;
+
+    let bar = document.getElementById("progressBar");
+    bar.style.width = risk + "%";
+
+    if (risk < 30) {
+      bar.style.background = "green";
+      document.getElementById("risk").style.color = "green";
+    } else if (risk < 60) {
+      bar.style.background = "orange";
+      document.getElementById("risk").style.color = "orange";
+    } else {
+      bar.style.background = "red";
+      document.getElementById("risk").style.color = "red";
+    }
+
+    // 🚀 SAVE TO DASHBOARD (IMPORTANT)
+    let history = JSON.parse(localStorage.getItem("predictions")) || [];
+
+    history.push({
+      age: data.age,
+      risk: risk,
+      date: new Date().toLocaleString()
+    });
+
+    localStorage.setItem("predictions", JSON.stringify(history));
+
+  } catch (err) {
+    document.getElementById("loader").classList.add("hidden");
+    alert("⚠ Backend not connected");
+  }
+}
+
+</script>
+
+</body>
+</html>

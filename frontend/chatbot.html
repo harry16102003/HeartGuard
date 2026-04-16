@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>HeartGuard AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-900 text-white flex h-screen">
+
+<!-- SIDEBAR -->
+<div class="w-64 bg-gray-800 p-4 flex flex-col">
+  <h2 class="text-xl mb-4">🤖 Heart AI</h2>
+
+  <button onclick="newChat()" 
+    class="bg-purple-600 p-2 rounded mb-4 hover:bg-purple-700">
+    + New Chat
+  </button>
+
+  <div id="history" class="flex-1 overflow-y-auto text-sm text-gray-300">
+    <p>Chat 1</p>
+  </div>
+
+  <a href="dashboard.html" class="mt-4 text-gray-400">← Back</a>
+</div>
+
+<!-- CHAT AREA -->
+<div class="flex-1 flex flex-col">
+
+  <!-- CHAT BOX -->
+  <div id="chatbox" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+
+  <!-- INPUT -->
+  <div class="p-4 bg-gray-800 flex">
+    <input id="input" 
+      class="flex-1 p-3 bg-gray-700 rounded-xl outline-none"
+      placeholder="Ask about heart health..."
+      onkeypress="if(event.key==='Enter') send()">
+
+    <button onclick="send()" 
+      class="ml-3 bg-purple-600 px-6 rounded-xl hover:bg-purple-700">
+      Send
+    </button>
+  </div>
+
+</div>
+
+<!-- SCRIPT -->
+<script>
+
+function addMessage(text, sender){
+  const chatbox = document.getElementById("chatbox");
+
+  let bubble = document.createElement("div");
+
+  if(sender === "user"){
+    bubble.className = "text-right";
+    bubble.innerHTML = `
+      <span class="bg-purple-600 px-4 py-2 rounded-xl inline-block">
+        ${text}
+      </span>`;
+  } else {
+    bubble.className = "text-left";
+    bubble.innerHTML = `
+      <span class="bg-gray-700 px-4 py-2 rounded-xl inline-block">
+        ${text}
+      </span>`;
+  }
+
+  chatbox.appendChild(bubble);
+  chatbox.scrollTop = chatbox.scrollHeight;
+}
+
+async function send(){
+
+  let input = document.getElementById("input").value.trim();
+  if(!input) return;
+
+  addMessage(input, "user");
+  document.getElementById("input").value = "";
+
+  // Typing animation
+  addMessage("Typing...", "bot");
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message: input })
+    });
+
+    const data = await res.json();
+
+    // Remove typing
+    let chatbox = document.getElementById("chatbox");
+    chatbox.removeChild(chatbox.lastChild);
+
+    addMessage(data.reply, "bot");
+
+  } catch (error) {
+    addMessage("⚠ Backend not connected", "bot");
+  }
+}
+
+// Clear chat
+function newChat(){
+  document.getElementById("chatbox").innerHTML = "";
+}
+
+</script>
+
+</body>
+</html>

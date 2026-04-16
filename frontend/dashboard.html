@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>HeartGuard Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gray-900 text-white flex h-screen overflow-hidden">
+
+<!-- SIDEBAR -->
+<div class="w-64 bg-gray-800 p-6">
+  <h2 class="text-2xl mb-6">❤️ HeartGuard</h2>
+
+  <ul class="space-y-4">
+    <li><a href="dashboard.html" class="text-purple-400">📊 Dashboard</a></li>
+    <li><a href="predict.html">❤️ Predict</a></li>
+    <li><a href="chatbot.html">🤖 AI Assistant</a></li>
+  </ul>
+</div>
+
+<!-- MAIN -->
+<div class="flex-1 p-6 flex flex-col justify-between">
+
+  <h1 class="text-2xl mb-2">📊 Health Dashboard</h1>
+
+  <!-- STAT CARDS -->
+  <div class="grid grid-cols-3 gap-4">
+
+    <div class="bg-white/10 p-4 rounded-xl text-center">
+      <h2 class="text-gray-300">Total Predictions</h2>
+      <p id="total" class="text-2xl font-bold mt-2">0</p>
+    </div>
+
+    <div class="bg-white/10 p-4 rounded-xl text-center">
+      <h2 class="text-gray-300">Average Risk</h2>
+      <p id="avgRisk" class="text-2xl font-bold mt-2">0%</p>
+    </div>
+
+    <div class="bg-white/10 p-4 rounded-xl text-center">
+      <h2 class="text-gray-300">High Risk Cases</h2>
+      <p id="highRisk" class="text-2xl font-bold mt-2 text-red-400">0</p>
+    </div>
+
+  </div>
+
+  <!-- CHARTS -->
+  <div class="grid grid-cols-3 gap-4 h-[60vh] mt-4">
+
+    <!-- Doughnut -->
+    <div class="bg-white/10 p-4 rounded-xl">
+      <canvas id="riskChart"></canvas>
+    </div>
+
+    <!-- Line -->
+    <div class="bg-white/10 p-4 rounded-xl">
+      <canvas id="ageChart"></canvas>
+    </div>
+
+    <!-- Bar -->
+    <div class="bg-white/10 p-4 rounded-xl">
+      <canvas id="bmiChart"></canvas>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+// ✅ GET REAL DATA FROM LOCAL STORAGE
+let data = JSON.parse(localStorage.getItem("predictions")) || [];
+
+// If no data → show demo fallback
+if(data.length === 0){
+  data = [
+    {age: 25, bmi: 22, risk: 10},
+    {age: 40, bmi: 27, risk: 45},
+    {age: 60, bmi: 30, risk: 75}
+  ];
+}
+
+// ----------------------
+// 📊 CALCULATIONS
+// ----------------------
+
+let total = data.length;
+document.getElementById("total").innerText = total;
+
+let avg = data.reduce((sum, d) => sum + d.risk, 0) / total;
+document.getElementById("avgRisk").innerText = avg.toFixed(1) + "%";
+
+let highRiskCount = data.filter(d => d.risk >= 60).length;
+document.getElementById("highRisk").innerText = highRiskCount;
+
+// ----------------------
+// 📊 RISK DISTRIBUTION
+// ----------------------
+
+let low = data.filter(d => d.risk < 30).length;
+let mid = data.filter(d => d.risk >= 30 && d.risk < 60).length;
+let high = data.filter(d => d.risk >= 60).length;
+
+new Chart(document.getElementById("riskChart"), {
+  type: 'doughnut',
+  data: {
+    labels: ["Low", "Medium", "High"],
+    datasets: [{
+      data: [low, mid, high]
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false }
+});
+
+// ----------------------
+// 📊 AGE VS RISK
+// ----------------------
+
+new Chart(document.getElementById("ageChart"), {
+  type: 'line',
+  data: {
+    labels: data.map(d => d.age),
+    datasets: [{
+      label: "Risk %",
+      data: data.map(d => d.risk)
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false }
+});
+
+// ----------------------
+// 📊 BMI VS RISK
+// ----------------------
+
+new Chart(document.getElementById("bmiChart"), {
+  type: 'bar',
+  data: {
+    labels: data.map(d => d.bmi || 25),
+    datasets: [{
+      label: "Risk %",
+      data: data.map(d => d.risk)
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false }
+});
+
+</script>
+
+</body>
+</html>
