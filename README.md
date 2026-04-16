@@ -48,3 +48,19 @@ The system also includes an AI chatbot for heart health awareness and guidance.
 ---
 
 ## 📂 Project Structure
+HeartGuard/
+│── backend/
+│ ├── app.py
+│ ├── model.pkl
+│ └── requirements.txt
+│
+│── frontend/
+│ ├── index.html
+│ ├── dashboard.html
+│ ├── styles.css
+│ └── script.js
+│
+│── dataset/
+│ └── heart_data.csv
+│
+│── README.md
